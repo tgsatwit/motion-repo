@@ -1,0 +1,105 @@
+import { DocPage } from "@/components/site/DocPage"
+import { AnimateDemo, StaggerDemo, SpringDemo, ScrollDemo } from "@/components/examples/JsExamples"
+
+export const metadata = { title: "JavaScript" }
+
+<DocPage section="JavaScript">
+
+# Animate with JavaScript
+
+<p className="lead">The <code>animate()</code> function works with any element, in any framework — or none at all. A template for a vanilla JS guide.</p>
+
+## Install
+
+<Tabs labels={["npm", "CDN"]}>
+```bash
+npm install motion
+```
+```html
+<script type="module">
+  import { animate } from "https://cdn.jsdelivr.net/npm/motion@latest/+esm"
+</script>
+```
+</Tabs>
+
+## animate()
+
+Pass an element (or a CSS selector), the values to animate to, and optional transition settings.
+
+```js
+import { animate } from "motion"
+
+animate(".box", { x: 100, rotate: 360 }, { duration: 1.2 })
+```
+
+<Example replay={false} label="animate()">
+  <AnimateDemo />
+</Example>
+
+<Callout type="tip">
+  `animate()` returns playback controls — `play()`, `pause()`, `stop()`, `time`, `speed` — so you can drive animations from your own UI.
+</Callout>
+
+## Stagger
+
+`stagger()` offsets each element's start time when animating a list.
+
+```js
+import { animate, stagger } from "motion"
+
+animate(
+  ".dot",
+  { y: [40, 0], opacity: [0, 1] },
+  { delay: stagger(0.06), type: "spring" }
+)
+```
+
+<Example replay={false} label="stagger()">
+  <StaggerDemo />
+</Example>
+
+## Springs
+
+Set `type: "spring"` for physics-based motion. Springs keep their velocity when interrupted, so rapid clicks feel natural.
+
+```js
+animate(element, { x: 100 }, {
+  type: "spring",
+  stiffness: 300,
+  damping: 12,
+})
+```
+
+<Example replay={false} label="Click rapidly to interrupt">
+  <SpringDemo />
+</Example>
+
+<Callout type="info" title="Tune it visually">
+  Use the [spring editor in Studio](/docs/studio#spring-editor) to find values that feel right.
+</Callout>
+
+## Scroll
+
+`scroll()` links an animation's progress to scroll position — of the page or any scrollable container.
+
+```js
+import { animate, scroll } from "motion"
+
+scroll(
+  animate(".progress", { scaleX: [0, 1] }),
+  { container: document.querySelector(".scroller") }
+)
+```
+
+<Example replay={false} label="Scroll the box" minHeight={320}>
+  <ScrollDemo />
+</Example>
+
+## Next steps
+
+<Cards>
+  <Card title="React" href="/docs/react">Declarative components and gestures.</Card>
+  <Card title="Studio" href="/docs/studio">Visual timeline and curve editors.</Card>
+</Cards>
+
+</DocPage>

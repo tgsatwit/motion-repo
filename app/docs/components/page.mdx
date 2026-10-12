@@ -1,0 +1,119 @@
+import { DocPage } from "@/components/site/DocPage"
+import { Accordion } from "@/components/docs/Accordion"
+import { FeatureGrid } from "@/components/docs/FeatureGrid"
+import { EnterDemo } from "@/components/examples/ReactExamples"
+
+export const metadata = { title: "Components" }
+
+<DocPage section="Get started">
+
+# Components
+
+<p className="lead">Every building block available in MDX pages, with the markup to use it. Use this page as a reference when writing your own docs.</p>
+
+## Adding a page
+
+<Steps>
+<Step>
+
+### Create the file
+
+Add `app/docs/your-page/page.mdx`. The folder name becomes the URL: `/docs/your-page`.
+
+<CodeBlock title="app/docs/your-page/page.mdx" lang="mdx" code={`import { DocPage } from "@/components/site/DocPage"
+
+export const metadata = { title: "Your page" }
+
+<DocPage section="Guides">
+
+# Your page
+
+Write markdown here.
+
+</DocPage>`} />
+
+</Step>
+<Step>
+
+### Add it to the navigation
+
+Add an entry to `sharedNav` or `platformNav` in `lib/site.ts`, and to `pageOrder` if it should appear in the previous/next links.
+
+</Step>
+</Steps>
+
+## Callouts
+
+<Callout type="info" title="Info">Neutral, supporting information.</Callout>
+<Callout type="tip" title="Tip">A helpful suggestion.</Callout>
+<Callout type="warning" title="Warning">Something to be careful about.</Callout>
+<Callout type="danger" title="Danger">Something that can break things.</Callout>
+
+```mdx
+<Callout type="tip" title="Tip">A helpful suggestion.</Callout>
+```
+
+## Code
+
+Fenced code blocks are highlighted with Shiki in light and dark themes, and get a copy button.
+
+```ts
+export function greet(name: string) {
+  return `Hello, ${name}`
+}
+```
+
+Use `<CodeBlock>` directly when you want a filename header:
+
+<CodeBlock title="config.ts" lang="ts" code={`export default { theme: "dark" }`} />
+
+## Tabs
+
+<Tabs labels={["React", "JavaScript"]}>
+```tsx
+<motion.div animate={{ x: 100 }} />
+```
+```js
+animate(".box", { x: 100 })
+```
+</Tabs>
+
+## Live examples
+
+Wrap any client component in `<Example>` to get a preview stage with a replay button.
+
+<Example>
+  <EnterDemo />
+</Example>
+
+## Cards
+
+<Cards cols={3}>
+  <Card title="React" href="/docs/react">Framework guide.</Card>
+  <Card title="JavaScript" href="/docs/javascript">Vanilla guide.</Card>
+  <Card title="Studio" href="/docs/studio">Product page.</Card>
+</Cards>
+
+## Feature grid
+
+<FeatureGrid features={[
+  { title: "Fast", description: "Short description." },
+  { title: "Flexible", description: "Short description." },
+  { title: "Friendly", description: "Short description." },
+]} />
+
+## Accordion
+
+<Accordion items={[
+  { q: "A question?", a: "An answer." },
+  { q: "Another question?", a: "Another answer." },
+]} />
+
+## Tables
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `type` | `"info" \| "tip" \| "warning" \| "danger"` | `"info"` |
+| `title` | `string` | — |
+
+</DocPage>

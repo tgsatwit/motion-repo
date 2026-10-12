@@ -1,0 +1,103 @@
+import { DocPage } from "@/components/site/DocPage"
+import { EditorMock } from "@/components/studio/EditorMock"
+import { Timeline } from "@/components/studio/Timeline"
+import { CurveEditor } from "@/components/studio/CurveEditor"
+import { SpringEditor } from "@/components/studio/SpringEditor"
+import { FeatureGrid } from "@/components/docs/FeatureGrid"
+import { Accordion } from "@/components/docs/Accordion"
+import { TimelineIcon, WaveIcon, CursorIcon, SparkIcon, LayersIcon, BotIcon } from "@/components/site/Icons"
+
+export const metadata = { title: "Studio" }
+
+<DocPage section="Developer tools">
+
+# Studio
+
+<p className="lead">Studio brings visual animation tools into your code editor — scrub timelines, shape easing curves and tune springs without leaving the file you're working in.</p>
+
+<EditorMock />
+
+<Callout type="tip" title="Template page">
+  This page is placeholder content showing how a product page can mix prose with interactive components. Swap the copy for your own and keep the building blocks.
+</Callout>
+
+## Install
+
+<Steps>
+<Step>
+
+### Add the extension
+
+Search for **Acme Studio** in your editor's extension marketplace, or install from the command line:
+
+<Tabs labels={["VS Code", "Cursor", "Windsurf"]}>
+```bash
+code --install-extension acme.studio
+```
+```bash
+cursor --install-extension acme.studio
+```
+```bash
+windsurf --install-extension acme.studio
+```
+</Tabs>
+
+</Step>
+<Step>
+
+### Open a file with animations
+
+Studio detects animation code automatically and adds inline previews next to transitions, easing curves and springs.
+
+</Step>
+<Step>
+
+### Click a preview to edit
+
+Each preview opens the matching editor below. Changes write straight back to your source.
+
+</Step>
+</Steps>
+
+## Timeline
+
+The timeline shows every animated value on its own track, so you can see how a sequence fits together at a glance. Press play, scrub the ruler, or drag a keyframe ◆ to retime it.
+
+<Timeline />
+
+<Callout type="info">
+  Values are eased between keyframes and drive a real `motion.div` through motion values, so the preview runs off React's render loop.
+</Callout>
+
+## Curve editor
+
+Drag the two handles to shape a cubic bézier easing curve. Pull a handle above the frame to overshoot.
+
+<CurveEditor />
+
+## Spring editor
+
+Springs feel natural because they're driven by physics rather than a fixed duration. Adjust stiffness, damping and mass to see the response curve change live. The output includes a CSS `linear()` easing you can paste into plain stylesheets.
+
+<SpringEditor />
+
+## Features
+
+<FeatureGrid features={[
+  { title: "Inline previews", description: "Tiny visualisations appear next to the code they describe.", icon: <SparkIcon size={16} /> },
+  { title: "Timeline view", description: "See sequences, delays and overlaps on one shared timeline.", icon: <TimelineIcon size={16} /> },
+  { title: "Spring tuning", description: "Dial in physics with instant visual feedback.", icon: <WaveIcon size={16} /> },
+  { title: "Two-way editing", description: "Edits in the panel write straight back to source.", icon: <CursorIcon size={16} /> },
+  { title: "CSS export", description: "Generate CSS easing for springs and curves.", icon: <LayersIcon size={16} /> },
+  { title: "AI aware", description: "Share context with your AI assistant for better suggestions.", icon: <BotIcon size={16} /> },
+]} />
+
+## FAQ
+
+<Accordion items={[
+  { q: "Which editors are supported?", a: "Any editor that supports VS Code extensions. Replace this with your own answer." },
+  { q: "Does Studio change my code?", a: "Only when you edit a value in one of the panels — every change is a normal, undoable edit." },
+  { q: "Is it free?", a: "Placeholder answer. Describe your pricing here." },
+]} />
+
+</DocPage>
