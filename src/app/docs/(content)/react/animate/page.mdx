@@ -1,0 +1,189 @@
+import { EnterDemo, ExitDemo, VariantsDemo, LayoutDemo } from "@/components/demos/react-demos";
+
+export const metadata = {
+  title: "Animate",
+  description: "Animate React components declaratively with initial, animate and exit props.",
+};
+
+# Animate
+
+Every animation in the React bindings starts with a `motion` component. It is a
+drop-in replacement for a DOM element that accepts three extra props describing
+where it starts, where it should end up, and how to get there.
+
+```tsx
+import { motion } from "kinetic/react";
+
+<motion.div
+  initial={{ opacity: 0, y: 24 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ type: "spring", stiffness: 320, damping: 26 }}
+/>
+```
+
+<EnterDemo />
+
+Whenever the value of `animate` changes, the component animates to the new
+state from wherever it currently is. Interruptions are handled for you: there is
+no need to cancel the previous animation or read the current value first.
+
+## The transition prop
+
+`transition` decides the shape of the motion. Springs are the default for
+physical properties because they preserve velocity across interruptions;
+durations are better when you need a sequence to land on an exact beat.
+
+<PropTable
+  rows={[
+    {
+      name: "type",
+      type: '"spring" | "tween" | "inertia"',
+      default: '"spring"',
+      description: "Physics model. Tween uses duration and ease instead of stiffness.",
+    },
+    {
+      name: "duration",
+      type: "number",
+      default: "0.3",
+      description: "Seconds, for tween transitions only.",
+    },
+    {
+      name: "ease",
+      type: "Easing | Easing[]",
+      default: '"easeOut"',
+      description: "Named easing, cubic bezier array, or one entry per keyframe segment.",
+    },
+    {
+      name: "stiffness",
+      type: "number",
+      default: "300",
+      description: "Spring tension. Higher is faster and snappier.",
+    },
+    {
+      name: "damping",
+      type: "number",
+      default: "25",
+      description: "Resistance. Below ~20 the spring visibly bounces.",
+    },
+    {
+      name: "delay",
+      type: "number",
+      default: "0",
+      description: "Seconds to wait before the animation starts.",
+    },
+    {
+      name: "repeat",
+      type: "number | Infinity",
+      default: "0",
+      description: "How many additional times to play the animation.",
+    },
+  ]}
+/>
+
+Options can be set per property, which is how you give a position and an opacity
+different timings in one declaration:
+
+```tsx
+<motion.div
+  animate={{ x: 120, opacity: 1 }}
+  transition={{
+    x: { type: "spring", stiffness: 400, damping: 30 },
+    opacity: { duration: 0.2 },
+  }}
+/>
+```
+
+## Keyframes
+
+Pass an array to animate through several values. `times` positions each
+keyframe as a fraction of the total duration, and `ease` can take one entry per
+segment.
+
+```tsx
+<motion.div
+  animate={{ x: [0, 120, 60], rotate: [0, 90, 0] }}
+  transition={{ duration: 1.2, times: [0, 0.6, 1], ease: ["easeOut", "easeInOut"] }}
+/>
+```
+
+<Callout type="tip">
+  Use `null` as the first keyframe to start from whatever the element's current
+  value happens to be, which keeps an interrupted animation smooth.
+</Callout>
+
+## Enter and exit
+
+React removes elements from the tree immediately, so an exit animation needs a
+component that delays the unmount. Wrap the conditional element in
+`AnimatePresence` and give it an `exit` prop.
+
+```tsx
+import { AnimatePresence, motion } from "kinetic/react";
+
+<AnimatePresence>
+  {open && (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.6 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.6 }}
+    />
+  )}
+</AnimatePresence>
+```
+
+<ExitDemo />
+
+Children of `AnimatePresence` need a stable `key`. The `mode` prop controls how
+entering and leaving elements share space: `"sync"` overlaps them, `"wait"`
+finishes the exit first, and `"popLayout"` takes the exiting element out of flow
+so siblings reflow immediately.
+
+## Variants
+
+Naming animation states keeps long prop objects out of your JSX and lets a
+parent orchestrate its children. A child inherits any variant name its parent
+animates to, so the parent below never names its children individually.
+
+```tsx
+const list = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0 },
+};
+
+<motion.ul variants={list} initial="hidden" animate="visible">
+  {items.map((entry) => (
+    <motion.li key={entry.id} variants={item} />
+  ))}
+</motion.ul>
+```
+
+<VariantsDemo />
+
+## Layout animations
+
+Add `layout` and the component animates between positions and sizes whenever
+its layout changes, using transforms rather than animating `width` or `top`.
+A shared `layoutId` carries the animation across different elements, which is
+how a selection pill appears to slide between tabs.
+
+```tsx
+{tabs.map((tab) => (
+  <button key={tab.id} onClick={() => setActive(tab.id)}>
+    {active === tab.id && <motion.span layoutId="pill" className="pill" />}
+    {tab.label}
+  </button>
+))}
+```
+
+<LayoutDemo />
+
+<Callout type="warning" title="Layout animations and transforms">
+  A parent with a CSS `transform` breaks the measurements layout animations rely
+  on. Animate the parent with Kinetic instead, so both elements are measured in
+  the same pass.
+</Callout>

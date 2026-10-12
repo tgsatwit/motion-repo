@@ -1,0 +1,143 @@
+import { GestureDemo, DragDemo } from "@/components/demos/react-demos";
+
+export const metadata = {
+  title: "Gestures",
+  description: "Hover, press, focus and drag states that animate without state management.",
+};
+
+# Gestures
+
+Gesture props are animation targets that apply while an interaction is active.
+They sit alongside `animate`, take priority over it while the gesture lasts, and
+return to the base state when it ends - no `useState`, no class toggling.
+
+```tsx
+<motion.button
+  whileHover={{ scale: 1.06, y: -2 }}
+  whileTap={{ scale: 0.96 }}
+  transition={{ type: "spring", stiffness: 500, damping: 24 }}
+>
+  Hover me
+</motion.button>
+```
+
+<GestureDemo />
+
+## Available gestures
+
+<PropTable
+  rows={[
+    {
+      name: "whileHover",
+      type: "Target | string",
+      description: "Pointer is over the element. Ignored on touch-only devices.",
+    },
+    {
+      name: "whileTap",
+      type: "Target | string",
+      description: "Pointer is pressed down on the element.",
+    },
+    {
+      name: "whileFocus",
+      type: "Target | string",
+      description: "Element has keyboard focus. Pair with whileHover for parity.",
+    },
+    {
+      name: "whileDrag",
+      type: "Target | string",
+      description: "A drag is in progress on this element.",
+    },
+    {
+      name: "whileInView",
+      type: "Target | string",
+      description: "Element intersects the viewport, configured with the viewport prop.",
+    },
+  ]}
+/>
+
+Each gesture also has event callbacks - `onHoverStart`, `onTapCancel`,
+`onDragEnd` and so on - which receive the native event plus the pointer info
+Kinetic has already normalised across mouse, touch and pen.
+
+<Callout type="tip" title="Keep pressable things pressable">
+  `whileTap` should always be paired with `whileFocus` on interactive elements.
+  A keyboard user gets no pointer feedback otherwise.
+</Callout>
+
+## Drag
+
+Set `drag` to make an element draggable. Constraints accept either a ref to a
+bounding element or explicit pixel limits, and `dragElastic` controls how far
+past the constraint the element can be pulled.
+
+```tsx
+const bounds = useRef(null);
+
+<div ref={bounds}>
+  <motion.div
+    drag
+    dragConstraints={bounds}
+    dragElastic={0.12}
+    whileDrag={{ scale: 1.1 }}
+  />
+</div>
+```
+
+<DragDemo />
+
+<PropTable
+  rows={[
+    {
+      name: "drag",
+      type: 'boolean | "x" | "y"',
+      default: "false",
+      description: "Enable dragging, optionally locked to one axis.",
+    },
+    {
+      name: "dragConstraints",
+      type: "RefObject | { top, right, bottom, left }",
+      description: "Bounding element or pixel offsets from the origin.",
+    },
+    {
+      name: "dragElastic",
+      type: "number | boolean",
+      default: "0.5",
+      description: "0 pins hard at the constraint, 1 follows the pointer freely.",
+    },
+    {
+      name: "dragMomentum",
+      type: "boolean",
+      default: "true",
+      description: "Continue with inertia after release.",
+    },
+    {
+      name: "dragSnapToOrigin",
+      type: "boolean",
+      default: "false",
+      description: "Spring back to the starting position on release.",
+    },
+  ]}
+/>
+
+## Reading gesture values
+
+For anything that needs the live position - a swipe-to-dismiss card, a custom
+slider - read the motion values directly rather than reaching for state. They
+update outside React's render cycle, so a drag stays at 60fps.
+
+```tsx
+const x = useMotionValue(0);
+const opacity = useTransform(x, [-200, 0, 200], [0, 1, 0]);
+
+<motion.div
+  drag="x"
+  style={{ x, opacity }}
+  onDragEnd={(event, info) => {
+    if (Math.abs(info.offset.x) > 150) dismiss();
+  }}
+/>
+```
+
+`info` carries `point`, `offset`, `delta` and `velocity`. Velocity is the useful
+one for dismissals: a short fast flick should count even when the distance
+travelled is small.

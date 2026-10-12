@@ -1,0 +1,117 @@
+export const metadata = {
+  title: "Installation",
+  description: "Add Kinetic to a React, JavaScript or build-tool project in under a minute.",
+};
+
+# Installation
+
+Kinetic ships as a single package with separate entry points per platform. The
+React bindings, the imperative `animate()` function and the Studio plugin all
+come from the same install, and your bundler only keeps what you import.
+
+## Package
+
+<Tabs>
+<Tab label="npm">
+
+```bash
+npm install kinetic
+```
+
+</Tab>
+<Tab label="pnpm">
+
+```bash
+pnpm add kinetic
+```
+
+</Tab>
+<Tab label="yarn">
+
+```bash
+yarn add kinetic
+```
+
+</Tab>
+<Tab label="bun">
+
+```bash
+bun add kinetic
+```
+
+</Tab>
+</Tabs>
+
+## Entry points
+
+Import from the entry point that matches your platform. Each one is tree-shakeable
+and has no dependencies beyond the others listed here.
+
+| Entry point | Size (min+gzip) | Use it for |
+| --- | --- | --- |
+| `kinetic` | 4.2kb | `animate()`, `scroll()`, `stagger()` in any JavaScript project |
+| `kinetic/react` | 11kb | `<motion.*>` components, hooks, gestures, layout transitions |
+| `kinetic/studio` | dev only | The visual timeline editor, stripped from production builds |
+| `kinetic/css` | 0kb runtime | Build-time keyframe and timing-function generation |
+
+## Verify the install
+
+Drop this into any component. If the square springs in, you are set up correctly.
+
+```tsx
+import { motion } from "kinetic/react";
+
+export function Check() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: "spring", stiffness: 320, damping: 26 }}
+      style={{ width: 64, height: 64, borderRadius: 16, background: "currentColor" }}
+    />
+  );
+}
+```
+
+<Callout type="tip" title="Server components">
+  `kinetic/react` is a client-only module. Mark the file that imports it with
+  `"use client"`, or keep your animated pieces in leaf components so the rest of
+  the tree stays on the server.
+</Callout>
+
+## TypeScript
+
+Types ship with the package - there is no `@types/kinetic` to install. The
+minimum supported version is TypeScript 5.0, and `strict` mode is recommended
+because several APIs narrow their return type based on the properties you animate.
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "bundler"
+  }
+}
+```
+
+## Reduced motion
+
+Respect the operating-system preference globally rather than per animation.
+Transforms and opacity still apply instantly, so layouts never break.
+
+```tsx
+import { KineticConfig } from "kinetic/react";
+
+export function Providers({ children }) {
+  return <KineticConfig reducedMotion="user">{children}</KineticConfig>;
+}
+```
+
+## Changelog
+
+Release notes live alongside each tag in the repository. The headline changes in
+the current major:
+
+- **3.2** - Studio timeline editing, per-keyframe easing, agent bridge.
+- **3.1** - Independent transforms, smaller `animate()` core, Vue bindings.
+- **3.0** - Rewritten on the Web Animations API with a hardware-accelerated path.
