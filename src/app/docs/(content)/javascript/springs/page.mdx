@@ -1,0 +1,108 @@
+import { SpringPlayground } from "@/components/demos/spring-playground";
+
+export const metadata = {
+  title: "Springs",
+  description: "Tune spring physics by feel: stiffness, damping, mass and when to use them.",
+};
+
+# Springs
+
+A spring animation has no duration. It simulates a mass on a spring and settles
+when the energy runs out, which is why it survives interruption so gracefully -
+the current velocity carries straight into the new animation instead of being
+discarded.
+
+```js
+animate(element, { x: 120 }, { type: "spring", stiffness: 300, damping: 20 });
+```
+
+## Tune by feel
+
+Drag the sliders. The curve shows the simulated position over time against the
+target line; the square runs the same configuration.
+
+<SpringPlayground />
+
+<PropTable
+  rows={[
+    {
+      name: "stiffness",
+      type: "number",
+      default: "300",
+      description: "Spring tension. Higher gets to the target faster.",
+    },
+    {
+      name: "damping",
+      type: "number",
+      default: "25",
+      description: "Opposing force. Below about 20 the spring bounces visibly; at 0 it never stops.",
+    },
+    {
+      name: "mass",
+      type: "number",
+      default: "1",
+      description: "Weight of the moving object. Heavier starts slower and overshoots further.",
+    },
+    {
+      name: "velocity",
+      type: "number",
+      default: "0",
+      description: "Initial velocity, usually taken from a gesture's release velocity.",
+    },
+    {
+      name: "restDelta",
+      type: "number",
+      default: "0.01",
+      description: "Distance from the target at which the animation is considered finished.",
+    },
+  ]}
+/>
+
+## Describing a spring by feel instead
+
+If you would rather specify the result than the physics, give a `duration` and
+`bounce` and Kinetic solves for the underlying constants.
+
+```js
+animate(element, { scale: 1 }, { type: "spring", duration: 0.5, bounce: 0.25 });
+```
+
+`bounce` runs from `0` (no overshoot, like a smooth tween) to `1` (very
+elastic). Note that `duration` here is an approximation - the settle is what it
+is - and that the two styles cannot be mixed: passing `stiffness` alongside
+`bounce` means `bounce` is ignored.
+
+## Picking values
+
+Some starting points that tend to read well:
+
+| Feel | stiffness | damping | Use for |
+| --- | --- | --- | --- |
+| Crisp | 500 | 30 | Buttons, toggles, small pressable things |
+| Standard | 300 | 26 | Cards, modals, most entrance animations |
+| Soft | 180 | 24 | Large surfaces, sheets, page transitions |
+| Playful | 400 | 14 | Deliberate overshoot on a focal element |
+
+<Callout type="tip" title="Scale damping with stiffness">
+  Raising stiffness without raising damping adds bounce as a side effect. If you
+  want something faster but equally settled, move both.
+</Callout>
+
+## Carrying velocity from a gesture
+
+The reason to reach for a spring after a drag is continuity. Pass the release
+velocity in and the element keeps moving at the speed the user left it at.
+
+```js
+element.addEventListener("pointerup", () => {
+  animate(x, 0, {
+    type: "spring",
+    stiffness: 400,
+    damping: 32,
+    velocity: x.getVelocity(),
+  });
+});
+```
+
+Motion values track their own velocity, so `getVelocity()` is already correct
+whether the value was last changed by a drag, a scroll or another animation.

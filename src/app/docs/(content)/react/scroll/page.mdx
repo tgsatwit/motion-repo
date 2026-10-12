@@ -1,0 +1,113 @@
+import { ScrollProgressDemo, ViewportDemo } from "@/components/demos/react-demos";
+
+export const metadata = {
+  title: "Scroll",
+  description: "Scroll-triggered reveals and scroll-linked values driven by motion values.",
+};
+
+# Scroll
+
+There are two distinct kinds of scroll animation, and picking the wrong one is
+the most common source of janky pages. **Scroll-triggered** animations play once
+when an element comes into view. **Scroll-linked** animations bind a value
+directly to scroll position, so scrubbing backwards rewinds them.
+
+## Scroll-triggered
+
+`whileInView` is a gesture like any other, backed by an `IntersectionObserver`.
+Set `once: true` unless you genuinely want the animation to replay every time
+the element re-enters.
+
+```tsx
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true, amount: 0.6 }}
+/>
+```
+
+<ViewportDemo />
+
+<PropTable
+  rows={[
+    {
+      name: "once",
+      type: "boolean",
+      default: "false",
+      description: "Stop observing after the first time the element enters.",
+    },
+    {
+      name: "amount",
+      type: 'number | "some" | "all"',
+      default: '"some"',
+      description: "Fraction of the element that must be visible to trigger.",
+    },
+    {
+      name: "margin",
+      type: "string",
+      default: '"0px"',
+      description: "Grows or shrinks the detection box, in CSS margin syntax.",
+    },
+    {
+      name: "root",
+      type: "RefObject",
+      description: "Scrollable ancestor to measure against instead of the viewport.",
+    },
+  ]}
+/>
+
+## Scroll-linked
+
+`useScroll` returns motion values that track scroll position. They update off
+the main render path, so binding dozens of elements to one of them costs
+nothing in React re-renders.
+
+```tsx
+const { scrollYProgress } = useScroll();
+const smooth = useSpring(scrollYProgress, { stiffness: 220, damping: 40 });
+
+<motion.div style={{ scaleX: smooth }} className="progress-bar" />
+```
+
+<ScrollProgressDemo />
+
+`useScroll` returns `scrollX`, `scrollY` in pixels and `scrollXProgress`,
+`scrollYProgress` normalised to `0-1`. Pass `container` to measure a scrollable
+element, or `target` with an `offset` to measure one element's travel through
+the viewport:
+
+```tsx
+const ref = useRef(null);
+const { scrollYProgress } = useScroll({
+  target: ref,
+  offset: ["start end", "end start"],
+});
+
+const y = useTransform(scrollYProgress, [0, 1], [0, -80]);
+```
+
+Offsets read as `[targetEdge viewportEdge]`. The pair above means progress is
+`0` when the target's top meets the viewport's bottom, and `1` when its bottom
+meets the viewport's top - the standard range for a parallax layer.
+
+<Callout type="warning" title="Scroll-linked animations must be cheap">
+  Only animate `transform`, `opacity` and `filter` from scroll. Anything that
+  triggers layout runs on every scroll frame and will drop frames on a trackpad.
+</Callout>
+
+## Smoothing
+
+Raw scroll values are a step function: they only change when the browser emits
+a scroll event. Feeding one through `useSpring` gives the lag and settle that
+makes a scrubbed animation feel physical rather than mechanical.
+
+```tsx
+const smooth = useSpring(scrollYProgress, {
+  stiffness: 220,
+  damping: 40,
+  restDelta: 0.001,
+});
+```
+
+Keep `restDelta` small for values mapped onto large pixel ranges, otherwise the
+spring stops visibly short of its target.

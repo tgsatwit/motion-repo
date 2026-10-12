@@ -1,0 +1,223 @@
+import { TimelineEditor } from "@/components/demos/timeline-editor";
+
+export const metadata = {
+  title: "Studio",
+  description:
+    "Open a timeline over your running app, edit keyframes against the real DOM, then write the result back to source.",
+};
+
+# Studio
+
+Studio is a development-only overlay that renders a timeline on top of your
+running application. Every track in it is bound to a real element, so scrubbing
+the playhead moves the actual DOM rather than a preview of it. When an animation
+feels right, Studio writes the change back into your source file.
+
+<Callout type="note">
+  Studio never ships to production. The plugin replaces `kinetic/studio` with an
+  empty module whenever `NODE_ENV` is `production`.
+</Callout>
+
+## Supported environments
+
+| Environment | Minimum version | Notes |
+| --- | --- | --- |
+| Next.js | 14.2 | App Router and Pages Router, Turbopack or webpack |
+| Vite | 5.0 | React, Vue and vanilla templates |
+| Nuxt | 3.10 | Register as a Nuxt module, not a Vite plugin |
+| Astro | 4.5 | Only islands using a client directive are editable |
+| webpack | 5.80 | Requires the `kinetic/studio/webpack` plugin |
+
+Browsers need `ResizeObserver` and the Web Animations API, which means Chrome
+111+, Safari 16.4+ or Firefox 128+. Studio is not supported in mobile browsers;
+use a desktop browser with device emulation instead.
+
+## Install
+
+Add the plugin to your build tool. It injects the overlay in development and
+opens a small local server that the editor uses to read and write source files.
+
+<Tabs>
+<Tab label="Next.js">
+
+```ts
+// next.config.ts
+import { withStudio } from "kinetic/studio/next";
+
+export default withStudio({
+  // Your existing Next config.
+});
+```
+
+</Tab>
+<Tab label="Vite">
+
+```ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import { studio } from "kinetic/studio/vite";
+
+export default defineConfig({
+  plugins: [studio()],
+});
+```
+
+</Tab>
+<Tab label="Nuxt">
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ["kinetic/studio/nuxt"],
+});
+```
+
+</Tab>
+<Tab label="webpack">
+
+```js
+// webpack.config.js
+const { StudioPlugin } = require("kinetic/studio/webpack");
+
+module.exports = {
+  plugins: [new StudioPlugin()],
+};
+```
+
+</Tab>
+</Tabs>
+
+Restart the dev server and press <kbd>⌥</kbd> <kbd>S</kbd> in the browser. The
+overlay docks to the bottom of the viewport and lists every animation it can
+find on the current page.
+
+### Options
+
+<PropTable
+  rows={[
+    {
+      name: "include",
+      type: "string[]",
+      default: '["src/**/*.{ts,tsx,js,jsx}"]',
+      description: "Globs Studio is allowed to read and write.",
+    },
+    {
+      name: "port",
+      type: "number",
+      default: "7932",
+      description: "Local bridge port. Change it if something else owns 7932.",
+    },
+    {
+      name: "shortcut",
+      type: "string | false",
+      default: '"alt+s"',
+      description: "Keyboard shortcut that opens the overlay, or false to disable it.",
+    },
+    {
+      name: "agent",
+      type: '"claude" | "cursor" | "codex" | false',
+      default: "false",
+      description: "Coding agent used for natural-language edits.",
+    },
+  ]}
+/>
+
+## Editing
+
+The timeline below is the same component Studio renders over your app, running
+against a sample composition. Drag a keyframe to retime it, click an empty lane
+to insert one, then adjust its value and easing in the inspector.
+
+<TimelineEditor />
+
+A few things worth knowing while you work in it:
+
+- **Tracks** map one-to-one to animated properties. Transform properties are
+  independent, so moving `x` never disturbs `scale` or `rotate`.
+- **Keyframes** snap to 50ms. Hold <kbd>Alt</kbd> while dragging for free
+  positioning, or use the arrow keys for a single snapped step.
+- **Easing** is stored on the keyframe you drag it onto and applies to the
+  segment leaving it, which is why the last keyframe in a track has no effect.
+- **The playhead** can be scrubbed from the ruler. Playback keeps running while
+  you edit, so you can tune a value and watch it land in the same gesture.
+
+### Keyboard shortcuts
+
+| Key | Action |
+| --- | --- |
+| <kbd>Space</kbd> | Play or pause |
+| <kbd>←</kbd> <kbd>→</kbd> | Nudge the selected keyframe by one snap step |
+| <kbd>K</kbd> | Insert a keyframe at the playhead |
+| <kbd>Backspace</kbd> | Delete the selected keyframe |
+| <kbd>L</kbd> | Toggle looping |
+| <kbd>⌘</kbd> <kbd>S</kbd> | Apply the current timeline to source |
+
+## Connect an agent
+
+Studio can hand the timeline to a coding agent so you can describe a change
+instead of dragging it. Point the plugin at whichever CLI you already have
+installed and authenticated.
+
+```ts
+studio({
+  agent: "claude",
+});
+```
+
+| Agent | Command Studio runs | Default model |
+| --- | --- | --- |
+| `claude` | `claude -p` | Claude Opus 5 |
+| `cursor` | `cursor-agent` | Configured in Cursor |
+| `codex` | `codex exec` | Configured in Codex |
+
+The agent receives the current timeline as structured JSON plus the path and
+line range of the animation in your source. It returns a patch, which Studio
+previews as a diff before anything is written.
+
+<Callout type="warning" title="Agents edit real files">
+  Keep a clean working tree while you experiment, or restrict the plugin's
+  `include` globs so an agent can only touch the directories you expect.
+</Callout>
+
+## Apply to code
+
+Press <kbd>⌘</kbd> <kbd>S</kbd> to write the timeline back. Studio locates the
+original call, preserves your formatting and variable names, and only rewrites
+the values that changed.
+
+```tsx
+// Before
+<motion.div animate={{ x: 0, scale: 1 }} transition={{ duration: 0.4 }} />
+
+// After
+<motion.div
+  animate={{ x: [-90, 90, 0], scale: [0.6, 1.25, 1] }}
+  transition={{
+    duration: 2,
+    x: { times: [0, 0.55, 1], ease: ["easeOut", "easeInOut"] },
+    scale: { times: [0, 0.55, 1], ease: ["anticipate", "easeInOut"] },
+  }}
+/>
+```
+
+Without an agent connected, Studio writes the patch itself using the same
+generator shown under the timeline above. With an agent connected, it asks the
+agent to apply the change so surrounding code - a shared `transition` constant,
+for instance - can be refactored alongside it.
+
+## Troubleshooting
+
+**The overlay never appears.** The plugin only injects in development. Confirm
+`NODE_ENV` is not `production`, then check that the shortcut has not been
+overridden by a browser extension.
+
+**Tracks are empty on a page that clearly animates.** Studio can only see
+animations created through Kinetic. CSS transitions and third-party libraries
+are invisible to it.
+
+**Edits are not written back.** The source file has to be inside one of the
+`include` globs and under version control. Studio refuses to write to files with
+unsaved external changes.
+
+**The bridge port is in use.** Set `port` in the plugin options, and restart the
+dev server so the overlay picks up the new value.

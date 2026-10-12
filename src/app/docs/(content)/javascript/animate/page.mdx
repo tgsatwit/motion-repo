@@ -1,0 +1,179 @@
+export const metadata = {
+  title: "animate()",
+  description: "The imperative animation function: elements, objects, sequences and stagger.",
+};
+
+# animate()
+
+`animate()` is the whole library in one function. It takes something to animate,
+a set of target values, and options. It works on DOM elements, plain objects and
+single numbers, and returns a playback control you can pause, reverse or await.
+
+```js
+import { animate } from "kinetic";
+
+animate("#box", { x: 120, rotate: 45 }, { duration: 0.6, ease: "easeOut" });
+```
+
+The first argument accepts a CSS selector, an element, an array of elements, or
+a `NodeList`. When it matches several elements they all animate together, which
+is what makes `stagger()` below a one-liner.
+
+## Options
+
+<PropTable
+  rows={[
+    {
+      name: "duration",
+      type: "number",
+      default: "0.3",
+      description: "Length in seconds. Ignored when type is spring.",
+    },
+    {
+      name: "ease",
+      type: "Easing | Easing[]",
+      default: '"easeOut"',
+      description: "Named easing, a cubic bezier array, or one per keyframe segment.",
+    },
+    {
+      name: "times",
+      type: "number[]",
+      description: "Position of each keyframe from 0 to 1. Must match the keyframe count.",
+    },
+    {
+      name: "delay",
+      type: "number | ((index: number) => number)",
+      default: "0",
+      description: "Seconds before starting, or a function for per-element offsets.",
+    },
+    {
+      name: "repeat",
+      type: "number | Infinity",
+      default: "0",
+      description: "Additional plays after the first.",
+    },
+    {
+      name: "repeatType",
+      type: '"loop" | "reverse" | "mirror"',
+      default: '"loop"',
+      description: "How each repetition relates to the one before it.",
+    },
+    {
+      name: "autoplay",
+      type: "boolean",
+      default: "true",
+      description: "Set false to build an animation and play it later.",
+    },
+  ]}
+/>
+
+## Playback controls
+
+The returned object is a playback handle. It is also a promise, so `await`
+resolves when the animation finishes.
+
+```js
+const playback = animate(element, { opacity: 0 }, { duration: 0.4 });
+
+playback.pause();
+playback.time = 0.2;    // Scrub to 200ms.
+playback.speed = -1;    // Play backwards.
+playback.play();
+
+await playback;         // Resolves on completion.
+playback.complete();    // Or jump straight to the end.
+```
+
+`playback.stop()` leaves the element wherever it is; `playback.cancel()` returns
+it to the value it had before the animation started.
+
+## Animating values, not elements
+
+Pass a number or an object and `animate()` becomes a general-purpose
+interpolator. This is how you drive a canvas, a WebGL uniform, or a counter.
+
+```js
+animate(0, 100, {
+  duration: 1.5,
+  ease: "easeOut",
+  onUpdate: (value) => {
+    counter.textContent = Math.round(value).toString();
+  },
+});
+```
+
+<Callout type="tip">
+  Prefer this over a manual `requestAnimationFrame` loop. The same scheduler
+  drives every animation on the page, so they all share one frame callback.
+</Callout>
+
+## Sequences
+
+Pass an array to run a timeline. Each entry is `[subject, values, options]`, and
+the `at` option positions it relative to the previous segment.
+
+```js
+animate([
+  [".card", { y: [20, 0], opacity: [0, 1] }, { duration: 0.4 }],
+  [".card-title", { opacity: [0, 1] }, { duration: 0.3, at: "-0.2" }],
+  [".card-action", { scale: [0.9, 1] }, { duration: 0.3, at: "<" }],
+]);
+```
+
+| `at` value | Meaning |
+| --- | --- |
+| `"<"` | Start together with the previous segment |
+| `"+0.3"` | Start 300ms after the previous segment ends |
+| `"-0.2"` | Overlap the previous segment by 200ms |
+| `1.2` | Start at an absolute 1.2s on the timeline |
+
+The sequence returns the same playback handle as a single animation, so you can
+scrub the whole thing at once - which is exactly what Studio's timeline does.
+
+## Stagger
+
+`stagger()` builds the per-element `delay` function for you.
+
+```js
+import { animate, stagger } from "kinetic";
+
+animate("li", { opacity: 1, y: 0 }, { delay: stagger(0.08, { from: "center" }) });
+```
+
+<PropTable
+  rows={[
+    {
+      name: "from",
+      type: 'number | "first" | "last" | "center"',
+      default: '"first"',
+      description: "Index the stagger radiates out from.",
+    },
+    {
+      name: "ease",
+      type: "Easing",
+      description: "Distributes the delays non-linearly across the set.",
+    },
+    {
+      name: "startDelay",
+      type: "number",
+      default: "0",
+      description: "Offset applied before the first element.",
+    },
+  ]}
+/>
+
+## Scroll
+
+`scroll()` links any animation or callback to scroll position, using a
+`ScrollTimeline` where the browser supports one and a passive listener where it
+does not.
+
+```js
+import { animate, scroll } from "kinetic";
+
+scroll(animate(".progress", { scaleX: [0, 1] }, { ease: "linear" }));
+
+scroll((progress) => {
+  header.classList.toggle("is-compact", progress > 0.05);
+});
+```
